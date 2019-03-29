@@ -22,6 +22,7 @@ import javax.validation.ValidatorFactory;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -33,16 +34,18 @@ public class GUI extends Application {
     private Class newClass = null;
     private Object newObject = null;
     private Method[] newMethods = null;
+    private Field[] newFields = null;
     private Gson gson = new GsonBuilder().setPrettyPrinting().create();
     private User user = null;
 
     private ValidatorFactory validatorFactory = Validation.buildDefaultValidatorFactory();
     private Validator validator = validatorFactory.getValidator();
+    Set<ConstraintViolation<User>> violations = null;
 
     private void showAlert(Alert.AlertType alertType, Window owner, String title, String message) {
         Alert alert = new Alert(alertType);
         alert.setTitle(title);
-        alert.setHeaderText((String)null);
+        alert.setHeaderText((String) null);
         alert.setContentText(message);
         alert.initOwner(owner);
         alert.show();
@@ -58,7 +61,7 @@ public class GUI extends Application {
         primaryStage.show();
     }
 
-    private GridPane createPane(){
+    private GridPane createPane() {
 
         GridPane gridPane = new GridPane();
         gridPane.setAlignment(Pos.CENTER);
@@ -70,7 +73,7 @@ public class GUI extends Application {
         return gridPane;
     }
 
-    private void setUIControlls(Stage primaryStage, GridPane gridPane){
+    private void setUIControlls(Stage primaryStage, GridPane gridPane) {
 
         VBox vbox = new VBox();
         StackPane stackPane = new StackPane();
@@ -88,7 +91,7 @@ public class GUI extends Application {
 
         ListView classListView = new ListView();
 
-        ArrayList <Node> nodesToRemove = new ArrayList<>();
+        ArrayList<Node> nodesToRemove = new ArrayList<>();
 
         gridPane.prefWidthProperty().bind(primaryStage.widthProperty().multiply(0.5));
         gridPane.prefHeightProperty().bind(primaryStage.heightProperty().multiply(1.0));
@@ -137,58 +140,50 @@ public class GUI extends Application {
         });
 
         use.setOnAction(event -> {
-            if(newMethods!=null && newClass!=null){
+            if (newMethods != null && newClass != null) {
                 try {
 
-                Method getLogin = newClass.getDeclaredMethod("getLoginTextLabel");
-                getLogin.setAccessible(true);
-                String login = (String) getLogin.invoke(newObject);
-                System.out.println("Wywolane z refleksji : " + login);
+                    Method getLogin = newClass.getDeclaredMethod("getLoginTextLabel");
+                    getLogin.setAccessible(true);
+                    String login = (String) getLogin.invoke(newObject);
+                    System.out.println("Wywolane z refleksji : " + login);
 
-                Method getName = newClass.getDeclaredMethod("getFirstNameTextLabel");
-                getName.setAccessible(true);
-                String name = (String) getName.invoke(newObject);
-                System.out.println("Wywolane z refleksji : " + name);
+                    Method getName = newClass.getDeclaredMethod("getFirstNameTextLabel");
+                    getName.setAccessible(true);
+                    String name = (String) getName.invoke(newObject);
+                    System.out.println("Wywolane z refleksji : " + name);
 
-                Method getLastName = newClass.getDeclaredMethod("getLastNameTextLabel");
-                getLastName.setAccessible(true);
-                String lastName = (String) getLastName.invoke(newObject);
-                System.out.println("Wywolane z refleksji : " + lastName);
+                    Method getLastName = newClass.getDeclaredMethod("getLastNameTextLabel");
+                    getLastName.setAccessible(true);
+                    String lastName = (String) getLastName.invoke(newObject);
+                    System.out.println("Wywolane z refleksji : " + lastName);
 
-                Method getPassword = newClass.getDeclaredMethod("getPasswordPasswordField");
-                getPassword.setAccessible(true);
-                String password = (String) getPassword.invoke(newObject);
-                System.out.println("Wywolane z refleksji : " + password);
+                    Method getPassword = newClass.getDeclaredMethod("getPasswordPasswordField");
+                    getPassword.setAccessible(true);
+                    String password = (String) getPassword.invoke(newObject);
+                    System.out.println("Wywolane z refleksji : " + password);
 
-                user = new User();
+                    user = new User();
 
-                user.setLogin(login);
-                user.setName(name);
-                user.setLastName(lastName);
-                user.setPassword(password);
+                    user.setLogin(login);
+                    user.setName(name);
+                    user.setLastName(lastName);
+                    user.setPassword(password);
 
-                Set<ConstraintViolation<User>> violations = validator.validate(user);
+                    violations = validator.validate(user);
 
-                for (ConstraintViolation<User> violation : violations) {
-                    //log.error(violation.getMessage());
+                    for (ConstraintViolation<User> violation : violations) {
+                        this.showAlert(Alert.AlertType.ERROR, gridPane.getScene().getWindow(),"Błąd!" , violation.getMessage());
+                    }
 
-                    this.showAlert(Alert.AlertType.ERROR, gridPane.getScene().getWindow(), "Błąd!", violation.getMessage());
-                }
+                    if (user != null && violations.isEmpty()) {
+                        Writer writer = new FileWriter("C:\\Users\\djankooo\\Desktop\\PWr\\PWJJ\\JSON.txt");
+                        gson.toJson(user, writer);
+                        writer.flush();
+                        writer.close();
+                    }
 
-                if(user!=null){
-                    Writer writer = new FileWriter("C:\\Users\\djankooo\\Desktop\\PWr\\PWJJ\\JSON.txt");
-                    gson.toJson(user, writer);
-                    writer.flush();
-                    writer.close();
-                }
-
-                } catch (NoSuchMethodException e) {
-                    e.printStackTrace();
-                } catch (IllegalAccessException e) {
-                    e.printStackTrace();
-                } catch (InvocationTargetException e) {
-                    e.printStackTrace();
-                } catch (IOException e) {
+                } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | IOException e) {
                     e.printStackTrace();
                 }
             }
@@ -202,16 +197,22 @@ public class GUI extends Application {
                 newClass = mcl.loadClass(String.valueOf(s.substring(1, s.length() - 1)));
                 newObject = newClass.newInstance();
                 newMethods = newClass.getDeclaredMethods();
-//                for( Method m : newMethods){
-//                    System.out.println(m);
-//                }
+                newFields = newClass.getDeclaredFields();
+
+                for( Field f : newFields){
+                    System.out.println(f);
+                }
+
+                for( Field f : newFields){
+                    if(f.isAnnotationPresent(DaneOsoboweField.class)){
+                        DaneOsoboweField daneOsoboweField = f.getAnnotation(DaneOsoboweField.class);
+
+                    }
+                }
+
                 stackPane.getChildren().clear();
                 stackPane.getChildren().add((Pane) newObject);
-            } catch (ClassNotFoundException e) {
-                e.printStackTrace();
-            } catch (IllegalAccessException e) {
-                e.printStackTrace();
-            } catch (InstantiationException e) {
+            } catch (ClassNotFoundException | IllegalAccessException | InstantiationException e) {
                 e.printStackTrace();
             }
         });

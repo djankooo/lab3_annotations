@@ -7,22 +7,22 @@ public class User {
 
     @NotNull
     @Size(min = 1, max = 10, message = "Pole login ma nieodpowiednia dlugosc!")
-    @DaneOsoboweField(name = "Login")
+    @DaneOsoboweField(name = "LoginAdnotacja")
     private String login;
 
     @NotNull
     @Size(min = 1, max = 100, message = "Pole imie ma nieodpowiednią długość!")
-    @DaneOsoboweField(name = "Name")
+    @DaneOsoboweField(name = "NameAdnotacja")
     private String name;
 
     @NotNull
     @Size(min = 1, max = 100, message = "Pole nazwisko ma nieodpowiednią długość!")
-    @DaneOsoboweField(name = "LastName")
+    @DaneOsoboweField(name = "LastNameAdnotacja")
     private String lastName;
 
     @NotNull
     @Size(min = 1, max = 100, message = "Pole haslo ma nieodpowiednią długość!")
-    @DaneOsoboweField(name = "Password")
+    @DaneOsoboweField(name = "PasswordAdnotacja")
     private String password;
 
     public User() { }

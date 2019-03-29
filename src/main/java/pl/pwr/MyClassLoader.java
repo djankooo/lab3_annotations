@@ -9,7 +9,6 @@ import java.util.ArrayList;
 
 public class MyClassLoader extends ClassLoader {
 
-
     private ArrayList<String> classNames = new ArrayList<>();
     private String path;
 
@@ -19,8 +18,7 @@ public class MyClassLoader extends ClassLoader {
             path = path + "\\";
     }
 
-    public void searchInDirectory()
-    {
+    public void searchInDirectory() {
         try {
             String finalDirPath = path;
             Files.walk(Paths.get(path)).filter(Files::isRegularFile).forEach((f) -> {
